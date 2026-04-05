@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assistant Mémoire Vocal — PoC v4</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <header id="header">
+      <div class="header-left">
+        <div class="logo">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="13" stroke="var(--accent)" stroke-width="1.5"/>
+            <circle cx="16" cy="16" r="5" fill="var(--accent)" opacity="0.5"/>
+            <circle cx="16" cy="16" r="9" stroke="var(--accent)" stroke-width="0.5" opacity="0.3"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Assistant Mémoire</h1>
+          <p class="header-sub">Prothèse cognitive vocale — PoC v4</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div id="mode-indicator" class="mode-badge">
+          <span id="mode-dot" class="mode-dot idle"></span>
+          <span id="mode-label">IDLE</span>
+        </div>
+        <div id="feature-indicator" class="feature-badge hidden"></div>
+        <button id="btn-reset" class="btn-icon" title="Réinitialiser">↻</button>
+      </div>
+    </header>
+
+    <div id="main">
+      <!-- LEFT PANEL -->
+      <aside id="panel-left">
+        <section class="panel-section">
+          <h3>Connexion API</h3>
+          <div class="api-input-group">
+            <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
+            <button id="btn-api-connect" class="btn-sm">OK</button>
+          </div>
+          <p id="api-status" class="status-text"></p>
+        </section>
+
+        <section class="panel-section">
+          <h3>Microphone</h3>
+          <div class="mic-control">
+            <button id="btn-mic" class="mic-btn" title="Activer le micro">
+              <svg class="mic-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <rect x="11" y="4" width="10" height="16" rx="5" fill="currentColor"/>
+                <path d="M8 16 Q8 24 16 24 Q24 24 24 16" stroke="currentColor" stroke-width="2" fill="none"/>
+                <line x1="16" y1="24" x2="16" y2="29" stroke="currentColor" stroke-width="2"/>
+                <line x1="11" y1="29" x2="21" y2="29" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <div class="mic-pulse"></div>
+            </button>
+            <div class="mic-info">
+              <span id="mic-state" class="mic-state-label">Inactif</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h3>Saisie texte</h3>
+          <form id="text-form">
+            <input type="text" id="text-input" placeholder="Tapez ici ou utilisez le micro…">
+            <button type="submit" class="btn-sm">→</button>
+          </form>
+        </section>
+
+        <section class="panel-section scenarios-section">
+          <h3>Scénarios de test</h3>
+          <div id="scenarios-list"></div>
+        </section>
+      </aside>
+
+      <!-- CENTER -->
+      <main id="panel-center">
+        <div id="conversation-log">
+          <div id="empty-state" class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="margin-bottom:12px;opacity:0.3">
+              <circle cx="24" cy="24" r="20" stroke="var(--accent)" stroke-width="1.5"/>
+              <path d="M15 20 Q24 30 33 20" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
+              <circle cx="18" cy="16" r="2" fill="var(--accent)" opacity="0.5"/>
+              <circle cx="30" cy="16" r="2" fill="var(--accent)" opacity="0.5"/>
+            </svg>
+            <p class="empty-title">Prêt à écouter</p>
+            <p class="empty-text">Connectez l'API, activez le micro, parlez.<br>Dites <strong>Memory</strong> pour activer une commande.</p>
+          </div>
+        </div>
+        <div id="interim-bar" class="hidden">
+          <span class="interim-dot">●</span>
+          <span id="interim-text"></span>
+        </div>
+      </main>
+
+      <!-- RIGHT PANEL -->
+      <aside id="panel-right">
+        <h3>État mémoire</h3>
+
+        <div class="inspector-section">
+          <h4><span class="section-dot" style="background:var(--f1)"></span>Session en cours<span id="session-count" class="count-badge">0</span></h4>
+          <div id="session-entries" class="inspector-entries"><p class="inspector-empty">Aucune session</p></div>
+        </div>
+
+        <div class="inspector-section">
+          <h4><span class="section-dot" style="background:var(--text-dim)"></span>Sessions du jour<span id="day-sessions-count" class="count-badge">0</span></h4>
+          <div id="day-sessions-entries" class="inspector-entries"><p class="inspector-empty">—</p></div>
+        </div>
+
+        <div class="inspector-section">
+          <h4><span class="section-dot" style="background:var(--f2)"></span>Souvenirs<span id="memories-count" class="count-badge">0</span></h4>
+          <div id="memories-entries" class="inspector-entries"><p class="inspector-empty">Aucun souvenir</p></div>
+        </div>
+
+        <div class="inspector-section">
+          <h4><span class="section-dot" style="background:var(--f3)"></span>Plan d'action</h4>
+          <div id="plan-entries" class="inspector-entries"><p class="inspector-empty">Aucun plan</p></div>
+        </div>
+
+        <div class="inspector-section">
+          <h4><span class="section-dot" style="background:var(--f4)"></span>Alarmes<span id="alarms-count" class="count-badge">0</span></h4>
+          <div id="alarms-entries" class="inspector-entries"><p class="inspector-empty">Aucune alarme</p></div>
+        </div>
+
+        <div class="inspector-section">
+          <h4><span class="section-dot" style="background:var(--f5)"></span>Objets<span id="objects-count" class="count-badge">0</span></h4>
+          <div id="objects-entries" class="inspector-entries"><p class="inspector-empty">Aucun objet</p></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
