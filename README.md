@@ -1,6 +1,7 @@
-# Assistant Mémoire Vocal — PoC
+# Assistant Mémoire Vocal — Prototype v5
 
-Prothèse cognitive pour amnésie antérograde.
+Prothèse cognitive vocale pour amnésie antérograde.  
+Architecture : **StateManager déterministe + LLM tool use**.
 
 ## Lancement
 
@@ -8,28 +9,31 @@ Prothèse cognitive pour amnésie antérograde.
 npx serve .
 ```
 
-Puis ouvrir **http://localhost:3000** dans **Google Chrome** (obligatoire pour le micro).
+Ouvrir **http://localhost:3000** dans **Google Chrome** (requis pour Web Speech API).
 
-Alternative sans serveur : ouvrir `index.html` directement dans Chrome (le micro peut ne pas fonctionner sans HTTPS/localhost).
+## Architecture v5 (vs v4)
 
-## Utilisation
-
-1. Entrer votre clé API Claude (Anthropic) dans le champ prévu
-2. Cliquer sur le bouton micro pour activer l'écoute
-3. Parler normalement — le buffer se remplit automatiquement
-4. Dire **"Memory"** suivi de votre commande pour activer une fonction
+| Aspect | v4 (ancien) | v5 (nouveau) |
+|--------|-------------|-------------|
+| Gestion d'état | LLM pilote tout | StateManager déterministe (code) |
+| Communication LLM | Texte libre + parsing JSON fragile | **Tool use** natif Claude (retours structurés garantis) |
+| Réponses factuelles | LLM reformule | **Templates** déterministes (0 hallucination) |
+| Dedup | Après insertion (self-dedup possible) | **Avant** insertion (programmatique + LLM) |
+| Contexte LLM | Historique de conversation | **Contexte injecté** structuré à chaque tour |
 
 ## Commandes
 
-- **"Memory, résume"** → résumé de la conversation en cours (F1)
-- **"Memory, crée un souvenir"** → compilation de la journée (F2)
-- **"Memory, je veux faire [tâche]"** → aide à l'action structurée (F3)
-- **"Memory, rappelle-moi de [quoi] à [quand]"** → alarme avec motif (F4)
-- **"Memory, [objet] est [emplacement]"** → enregistrement objet (F5)
-- **"Memory, où est [objet] ?"** → recherche objet (F5)
+- **"Memory, résume"** → F1 résumé conversation
+- **"Memory, crée un souvenir"** → F2 compilation journalière
+- **"Memory, je veux faire [tâche]"** → F3 aide à l'action
+- **"Memory, rappelle-moi [quoi] à [quand]"** → F4 alarme
+- **"Memory, [objet] est [lieu]"** → F5 objet
+- **"Memory, où est [objet] ?"** → F5 lecture
+- **"Memory stop"** → retour IDLE
+
+En mode actif : pas besoin de redire "Memory" — parlez directement.
 
 ## Prérequis
 
-- Google Chrome (Web Speech API)
+- Google Chrome
 - Clé API Anthropic (Claude)
-- Connexion internet (pour l'API Claude)
